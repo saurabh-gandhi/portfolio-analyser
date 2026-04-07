@@ -1,0 +1,80 @@
+# config/instrument_overrides.yaml
+# Per-instrument overrides. Asset names must match your portfolio CSV exactly (case-insensitive).
+# These take priority over all auto-detection logic.
+
+instruments:
+  # ── NPS ───────────────────────────────────────────────────────────────────
+  # Specify your NPS scheme type: LC75, LC50, or LC25
+  # Or provide custom splits (must sum to 100)
+  "Saurabh NPS":
+    type: nps
+    scheme: LC75      # Aggressive / Lifecycle 75
+
+  "Divya NPS":
+    type: nps
+    scheme: LC75
+
+  # ── EPF ───────────────────────────────────────────────────────────────────
+  # Auto-detected from Type=Providend fund. Can override splits here.
+  "Saurabh EPF":
+    type: epf
+
+  "Divya EPF":
+    type: epf
+
+  # ── PPF ───────────────────────────────────────────────────────────────────
+  "PPF":
+    type: ppf
+
+  # ── LIC / Insurance ───────────────────────────────────────────────────────
+  # treatment options:
+  #   debt_long_term  → 100% debt (recommended for endowment/traditional policies)
+  #   insurance_wrapper → opaque (if you want to exclude from debt analysis)
+  "Divya LIC":
+    type: lic
+    treatment: debt_long_term
+    maturity_year: 2030
+
+  "Saurabh LIC":
+    type: lic
+    treatment: debt_long_term
+    maturity_year: 2030
+
+  # ── Arbitrage Funds ────────────────────────────────────────────────────────
+  # These are auto-detected by name containing "arbitrage", but you can force it
+  "Parag Parikh Arbitrage Fund":
+    type: arbitrage_fund
+
+  # ── ESOPs / Unlisted ──────────────────────────────────────────────────────
+  "Upstox ESOPs":
+    type: esop
+    asset_class: "Indian Equity — Unlisted / Private"
+    market_cap: unlisted
+
+  # ── Cash / Deposits ───────────────────────────────────────────────────────
+  "Bank - Axis":
+    type: bank_account
+
+  "Rental":
+    type: rental
+
+  # ── Custom Debt ───────────────────────────────────────────────────────────
+  "Divya Bonds":
+    type: debt
+    duration: short_term    # short_term (<3yr) or long_term (>3yr)
+    asset_class: "Indian Corp Debt — Short Term (Bonds)"
+
+  # ── Template for new instruments ──────────────────────────────────────────
+  # "My ULIP Policy":
+  #   type: lic
+  #   treatment: debt_long_term
+  #   maturity_year: 2028
+
+  # "Company ESOPs":
+  #   type: esop
+  #   asset_class: "Indian Equity — Unlisted / Private"
+
+  # "US ETF VOO":
+  #   type: us_etf
+  #   index: S&P 500
+  #   us_large_pct: 100

@@ -1,0 +1,93 @@
+# config/asset_class_map.yaml
+# Default look-through rules for each instrument type.
+# Override specific instruments in instrument_overrides.yaml
+
+defaults:
+  # NPS schemes
+  nps_lc75:   { Indian Equity — Large Cap: 75, Indian Govt Bonds — Long Term: 15, Indian Corp Debt — Long Term (NPS): 10 }
+  nps_lc50:   { Indian Equity — Large Cap: 50, Indian Govt Bonds — Long Term: 30, Indian Corp Debt — Long Term (NPS): 20 }
+  nps_lc25:   { Indian Equity — Large Cap: 25, Indian Govt Bonds — Long Term: 45, Indian Corp Debt — Long Term (NPS): 30 }
+
+  # EPFO mandate: ~15% equity (Nifty/Sensex ETFs), ~55% G-Secs, ~30% corporate bonds
+  epf:        { Indian Equity — Large Cap: 15, Indian Govt Bonds — Long Term: 55, Indian Corp Debt — Long Term (EPF): 30 }
+
+  # PPF — pure sovereign debt
+  ppf:        { Indian Govt Bonds — Long Term: 100 }
+
+  # REIT look-through: ~80% commercial real estate income, ~20% embedded debt
+  reit:       { Commercial Real Estate: 80, Indian Corp Debt — Long Term (REIT): 20 }
+
+  # LIC / Insurance — default: treat as opaque (override in instrument_overrides.yaml)
+  lic_debt_long_term:  { "Debt — Insurance/LIC (Long Term, ~2030)": 100 }
+  lic_wrapper:         { "Insurance / LIC Wrapper": 100 }
+
+  # Arbitrage funds — excluded from equity, shown separately
+  arbitrage:  { "Cash & Equivalents (Arbitrage)": 100 }
+
+  # Gold instruments
+  sgb:         { "Gold — Sovereign Gold Bonds (Paper)": 100 }
+  gold_etf:    { "Gold — ETF (Paper)": 100 }
+  gold_physical: { "Gold — Physical": 100 }
+
+  # Cash
+  bank_account:    { "Cash — Bank / Savings Account": 100 }
+  rental:          { "Cash — Rental Deposit / Receivable": 100 }
+
+# Known REIT tickers
+reits:
+  - BIRET-RR
+  - BIRET
+  - EMBASSY-RR
+  - EMBASSY
+  - KRT-RR
+  - KRT
+  - NEXUS-RR
+  - MINDSPACE-RR
+
+# Known SGB pattern (regex)
+sgb_pattern: "^SGB[A-Z]{3}\\d{2}"
+
+# Known arbitrage funds (by name substring, case-insensitive)
+arbitrage_funds:
+  - "arbitrage"
+  - "arb fund"
+
+# Market cap index membership
+# Stocks in Nifty 50 / Nifty Next 50 = Large Cap
+# Stocks in Nifty Midcap 150 = Mid Cap
+# Others = Small Cap (default)
+# Override individual stocks in market_cap_overrides.yaml
+
+# ETF → index mapping (for market cap attribution)
+etf_index_map:
+  NIFTYBEES:    { index: Nifty 50,           large_pct: 100, mid_pct: 0,  small_pct: 0 }
+  JUNIORBEES:   { index: Nifty Next 50,      large_pct: 100, mid_pct: 0,  small_pct: 0 }
+  MIDCAPETF:    { index: Nifty Midcap 150,   large_pct: 0,   mid_pct: 100, small_pct: 0 }
+  LOWVOLIETF:   { index: Nifty 100 Low Vol,  large_pct: 100, mid_pct: 0,  small_pct: 0 }
+  GOLDBEES:     { index: Gold,               gold_etf: 100 }
+  MON100:       { index: Nasdaq 100,         us_large_pct: 100 }
+  MAFANG:       { index: Nasdaq FANG+,       us_large_pct: 100 }
+  HNGSNGBEES:   { index: Hang Seng,          us_large_pct: 100 }
+  QQQ:          { index: Nasdaq 100,         us_large_pct: 100 }
+  SPY:          { index: S&P 500,            us_large_pct: 100 }
+  VTI:          { index: Total Market,       us_large_pct: 80, us_mid_pct: 15, us_small_pct: 5 }
+  VOO:          { index: S&P 500,            us_large_pct: 100 }
+  IVV:          { index: S&P 500,            us_large_pct: 100 }
+
+# MF category → default market cap split (used when mfdata.in data unavailable)
+mf_category_defaults:
+  large_cap:      { large_pct: 95, mid_pct: 3,  small_pct: 2  }
+  mid_cap:        { large_pct: 10, mid_pct: 80, small_pct: 10 }
+  small_cap:      { large_pct: 5,  mid_pct: 10, small_pct: 85 }
+  flexi_cap:      { large_pct: 55, mid_pct: 30, small_pct: 15 }
+  multi_cap:      { large_pct: 33, mid_pct: 33, small_pct: 34 }
+  large_midcap:   { large_pct: 50, mid_pct: 50, small_pct: 0  }
+  elss:           { large_pct: 75, mid_pct: 20, small_pct: 5  }
+  index_nifty50:  { large_pct: 100, mid_pct: 0, small_pct: 0  }
+  index_next50:   { large_pct: 100, mid_pct: 0, small_pct: 0  }
+  index_midcap:   { large_pct: 0,  mid_pct: 100, small_pct: 0 }
+  index_largemidcap: { large_pct: 40, mid_pct: 60, small_pct: 0 }
+  arbitrage:      { arbitrage: 100 }
+  liquid:         { cash_short_term: 100 }
+  overnight:      { cash_short_term: 100 }
+  fof_overseas:   { us_large_pct: 100 }

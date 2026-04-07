@@ -1,0 +1,16 @@
+# config/market_cap_overrides.yaml
+# Override the auto-detected market cap category for individual stocks.
+# Auto-detection uses Nifty index membership:
+#   Nifty 50 / Nifty Next 50  → large_cap
+#   Nifty Midcap 150          → mid_cap
+#   Everything else           → small_cap
+# Values: large_cap, mid_cap, small_cap, unlisted
+
+stocks:
+  # Mid cap direct stocks (may be in Nifty Midcap 150)
+  "CGPOWER": mid_cap
+  "CGPOWER": mid_cap
+
+  # Add overrides as needed, e.g.:
+  # "SOME_TICKER": small_cap
+  # "UNLISTED_CO": unlisted

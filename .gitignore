@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Output files
+*.xlsx
+!data/sample/*.xlsx
+
+# Data / personal
+data/*.csv
+data/sample/portfolio_sample.csv
+!data/sample/sample_portfolio.csv
+*.pkl
+*.xls
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp

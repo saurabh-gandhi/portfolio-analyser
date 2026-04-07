@@ -1,0 +1,133 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# instrument_config.yaml  —  Portfolio Analyser configuration
+# All look-through assumptions are here. Override to match your situation.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── LIC / Insurance policies ────────────────────────────────────────────────
+lic_treatment:
+  asset_class: "Debt — Insurance/LIC"
+  maturity_year: 2030         # change to actual policy maturity year
+  duration: long_term         # long_term (>3yr) | short_term (<3yr)
+
+# ── NPS scheme assumption ────────────────────────────────────────────────────
+nps_scheme:
+  equity_pct: 75              # LC75 Aggressive. Change to 50 (LC50) or 25 (Conservative)
+  equity_sub_class: large_cap # NPS equity tracks large-cap indices
+  govt_bond_pct: 15
+  corp_debt_pct: 10
+  govt_duration: long_term
+  corp_duration: long_term
+
+# ── EPF allocation (EPFO mandate) ────────────────────────────────────────────
+epf_allocation:
+  equity_pct: 15              # EPFO invests ~15% in Nifty/Sensex ETFs
+  equity_sub_class: large_cap
+  govt_bond_pct: 55           # G-Secs, SDLs
+  corp_debt_pct: 30           # corporate bonds
+  govt_duration: long_term
+  corp_duration: long_term
+
+# ── PPF ──────────────────────────────────────────────────────────────────────
+ppf_allocation:
+  asset_class: Indian Govt Bonds
+  duration: long_term         # 15yr lock-in
+
+# ── Arbitrage funds (treated as cash equivalent) ────────────────────────────
+arbitrage_funds:
+  - "Parag Parikh Arbitrage Fund"
+  - "Nippon India Arbitrage Fund"
+  - "HDFC Arbitrage Fund"
+  - "ICICI Prudential Equity Arbitrage Fund"
+  - "Kotak Equity Arbitrage Fund"
+  - "Axis Arbitrage Fund"
+
+# ── REIT look-through ────────────────────────────────────────────────────────
+reit_equity_pct: 80           # % of REIT NAV = commercial real estate
+reit_debt_pct: 20             # % = embedded debt in REIT structure
+reit_debt_duration: long_term
+
+# ── Index fund / ETF market cap classification ───────────────────────────────
+index_market_cap:
+  # Format: substring_match: cap_class (large | mid | small | mixed)
+  "nifty 50": large
+  "nifty next 50": large       # SEBI classifies top 100 as large cap
+  "niftybees": large
+  "juniorbees": large
+  "nifty 100": large
+  "sensex": large
+  "midcap 150": mid
+  "midcapetf": mid
+  "smallcap 250": small
+  "smallcap 50": small
+  "largemidcap 250": mixed     # see largemidcap_split below
+  "large and midcap": mixed
+
+largemidcap_split:
+  large_pct: 40               # Nifty 100 portion
+  mid_pct: 60                 # Nifty 150 portion
+
+# ── Flexi/Multi/Active fund defaults (used when API data unavailable) ────────
+active_fund_defaults:
+  flexi_cap:
+    large_cap_pct: 60
+    mid_cap_pct: 25
+    small_cap_pct: 15
+  large_cap:
+    large_cap_pct: 100
+  large_midcap:
+    large_cap_pct: 50
+    mid_cap_pct: 50
+  elss:
+    large_cap_pct: 75
+    mid_cap_pct: 20
+    small_cap_pct: 5
+  small_cap:
+    large_cap_pct: 5
+    mid_cap_pct: 10
+    small_cap_pct: 85
+
+# ── US / International equity classification ─────────────────────────────────
+us_equity_keywords:
+  - "nasdaq 100"
+  - "nasdaq100"
+  - "mon100"
+  - "qqq"
+  - "s&p 500"
+  - "us equity"
+  - "international"
+  - "global"
+  - "n100"
+
+us_equity_sub_class: "large_mega_cap"   # All Nasdaq 100 = large/mega cap
+
+# ── Gold classification ──────────────────────────────────────────────────────
+gold_keywords:
+  sgb: ["sgb", "sovereign gold bond", "-gb"]
+  etf: ["goldbees", "gold etf", "gold bees", "nippon gold", "hdfc gold etf"]
+  physical: ["physical", "jewellery", "jewelry", "ring", "bangle", "coin", "bar", "akshay"]
+
+# ── Cash / Savings account keywords ─────────────────────────────────────────
+cash_keywords:
+  bank: ["bank", "savings", "current account", "fd", "fixed deposit"]
+  rental: ["rental", "rent", "deposit", "security deposit"]
+  liquid_fund: ["liquid fund", "overnight fund", "money market"]
+
+# ── Known direct stock market cap (override auto-detection) ─────────────────
+# Format: ticker_or_name: cap_class
+stock_market_cap_overrides:
+  "BHARTIARTL": large
+  "HDFCBANK": large
+  "HINDUNILVR": large
+  "RELIANCE": large
+  "INFY": large
+  "TCS": large
+  "CGPOWER": mid
+  "NVDA": large       # US stock
+  "AAPL": large
+  "MSFT": large
+
+# ── Output Excel settings ────────────────────────────────────────────────────
+excel:
+  font: Arial
+  freeze_stock_rollup_rows: true
+  color_scheme: blue_navy     # blue_navy | green | monochrome
