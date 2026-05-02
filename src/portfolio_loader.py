@@ -1,7 +1,10 @@
 """Load and validate portfolio CSV input."""
+import re
 import pandas as pd
 from pathlib import Path
 from .utils import clean_number
+
+_SGB_PATTERN = re.compile(r'^SGB[A-Z]{3}\d{2}', re.IGNORECASE)
 
 
 REQUIRED_COLUMNS = {'Asset', 'Asset Category', 'Type', 'Present value'}
@@ -75,7 +78,8 @@ class PortfolioLoader:
         if any(k in t for k in ESOP_TYPES):
             return 'esops'
         if 'gold' in cat and t in BOND_TYPES | {'bond'}:
-            return 'sgb'          # sovereign gold bond
+            # Only real SGBs match the SEBI naming pattern (e.g. SGBJAN29X-GB)
+            return 'sgb' if _SGB_PATTERN.match(row['AssetName'].strip()) else 'gold_physical'
         if any(k in name for k in GOLD_ETF):
             return 'gold_etf'
         if 'gold' in cat:

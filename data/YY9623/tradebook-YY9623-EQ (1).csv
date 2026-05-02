@@ -1,0 +1,3 @@
+symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time
+JITFINFRA,INE863T01013,2025-04-29,BSE,EQ,T,sell,false,42.000000,400.000000,31700,1745899200000042009,2025-04-29T09:48:42
+CGPOWER,INE067A01029,2025-08-12,BSE,EQ,A,sell,false,123.000000,659.250000,7221800,1754985461762121320,2025-08-12T13:35:31

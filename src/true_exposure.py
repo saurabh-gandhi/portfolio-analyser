@@ -2,8 +2,19 @@
 Look-through logic: map every portfolio asset to its true economic exposure.
 Handles EPF, PPF, NPS, LIC, REITs, Gold, Cash, Arbitrage funds.
 """
+import yaml
 import pandas as pd
+from pathlib import Path
 from typing import Optional
+
+_OVERRIDES_PATH = Path(__file__).parent.parent / "config" / "instrument_overrides.yaml"
+
+def _load_instrument_overrides() -> dict:
+    if _OVERRIDES_PATH.exists():
+        with open(_OVERRIDES_PATH) as f:
+            data = yaml.safe_load(f) or {}
+            return {k.lower(): v for k, v in data.get("instruments", {}).items()}
+    return {}
 
 
 def compute_true_exposure(
@@ -20,8 +31,9 @@ def compute_true_exposure(
     rows = []
     total = portfolio_df['PresentValue'].sum()
 
-    arb_funds = {f.lower() for f in config.get('arbitrage_funds', [])}
-    nps_cfg   = config.get('nps_scheme', {})
+    arb_funds    = {f.lower() for f in config.get('arbitrage_funds', [])}
+    nps_cfg      = config.get('nps_scheme', {})
+    inst_overrides = _load_instrument_overrides()
     epf_cfg   = config.get('epf_allocation', {})
     lic_cfg   = config.get('lic_treatment', {})
     reit_eq   = config.get('reit_equity_pct', 80)
@@ -51,9 +63,14 @@ def compute_true_exposure(
             add(name, pv, 'Indian Govt Bonds', 100.0)
 
         elif cls == 'nps':
-            add(name, pv, 'Indian Equity',          nps_cfg.get('equity_pct', 75))
-            add(name, pv, 'Indian Govt Bonds',       nps_cfg.get('govt_bond_pct', 15))
-            add(name, pv, 'Indian Corp Debt / CDs',  nps_cfg.get('corp_debt_pct', 10))
+            # Per-instrument override takes priority over global NPS config
+            ov = inst_overrides.get(nlo, {})
+            eq_pct  = ov.get('equity_pct',    nps_cfg.get('equity_pct', 75))
+            gb_pct  = ov.get('govt_bond_pct', nps_cfg.get('govt_bond_pct', 15))
+            cd_pct  = ov.get('corp_debt_pct', nps_cfg.get('corp_debt_pct', 10))
+            if eq_pct:  add(name, pv, 'Indian Equity',         eq_pct)
+            if gb_pct:  add(name, pv, 'Indian Govt Bonds',     gb_pct)
+            if cd_pct:  add(name, pv, 'Indian Corp Debt / CDs', cd_pct)
 
         elif cls == 'lic':
             label = lic_cfg.get('asset_class', 'Debt — Insurance/LIC')

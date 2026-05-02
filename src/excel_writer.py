@@ -447,5 +447,234 @@ class ExcelWriter:
             ]:
                 _data_cell(ws, rn, col, val, fmt, aln, bg)
 
+    def add_original_holdings(self, portfolio_df: pd.DataFrame):
+        """Add 📋 Original Holdings sheet: raw portfolio grouped by Asset Category."""
+        ws = self.wb.create_sheet('📋 Original Holdings')
+        ws.sheet_view.showGridLines = False
+        ws.freeze_panes = 'A4'
+
+        _title_bar(ws,
+                   f'ORIGINAL HOLDINGS  |  {len(portfolio_df)} instruments  |  '
+                   f'Total: {fmt_lakhs(self.total)}',
+                   7, height=28, sz=11)
+
+        ws.merge_cells('A2:G2')
+        c = ws['A2']
+        c.value = 'Raw portfolio as entered. Grouped by Asset Category, sorted by ₹ value descending.'
+        c.font = _font(8, False, 'FF444444')
+        c.fill = _fl('FFEEF4FB')
+        c.alignment = _al('left')
+        ws.row_dimensions[2].height = 14
+
+        for i, w in enumerate([4, 50, 22, 12, 14, 18, 16], 1):
+            ws.column_dimensions[get_column_letter(i)].width = w
+
+        _hdr_row(ws, 3,
+                 ['#', 'Asset', 'Type', 'Qty.', 'LTP (₹)', 'Present Value (₹)', '% of Portfolio'],
+                 bg=C['nav'], height=26)
+
+        # Category → colour mapping
+        CAT_COLORS = {
+            'equity':      {'header': 'FF2E75B6', 'l1': 'FFAFD8F8', 'l2': 'FFD6E4F7'},
+            'debt':        {'header': 'FF833C00', 'l1': 'FFFCE4D6', 'l2': 'FFFFF2CC'},
+            'gold':        {'header': 'FF7F5F00', 'l1': 'FFFFD966', 'l2': 'FFFFF2CC'},
+            'real estate': {'header': 'FF1F5C8B', 'l1': 'FFB4D3EE', 'l2': 'FFD6E4F7'},
+            'cash':        {'header': 'FF375623', 'l1': 'FFC6E0B4', 'l2': 'FFE2EFDA'},
+        }
+        DEFAULT_COLORS = {'header': 'FF555555', 'l1': 'FFE0E0E0', 'l2': 'FFF5F5F5'}
+
+        # Group by Asset Category, sections ordered by category total descending
+        df = portfolio_df.copy()
+        df['_cat'] = df['Asset Category'].fillna('Other').str.strip()
+        cat_totals = df.groupby('_cat')['PresentValue'].sum().sort_values(ascending=False)
+
+        row = 4
+        overall_rank = 0
+        for cat, cat_total in cat_totals.items():
+            clrs = CAT_COLORS.get(cat.lower(), DEFAULT_COLORS)
+            cat_df = df[df['_cat'] == cat].sort_values('PresentValue', ascending=False)
+
+            # Category header
+            ws.merge_cells(f'A{row}:G{row}')
+            c = ws.cell(row, 1,
+                        f'  {cat}   —   {fmt_lakhs(cat_total)}   '
+                        f'({cat_total / self.total * 100:.1f}% of portfolio)')
+            c.font = _font(10, True, C['white'])
+            c.fill = _fl(clrs['header'])
+            c.alignment = _al('left')
+            for col in range(1, 8):
+                ws.cell(row, col).fill = _fl(clrs['header'])
+                ws.cell(row, col).border = _bd()
+            ws.row_dimensions[row].height = 22
+            row += 1
+
+            for idx, (_, r) in enumerate(cat_df.iterrows()):
+                overall_rank += 1
+                bg = clrs['l1'] if idx % 2 == 0 else clrs['l2']
+                pv = float(r['PresentValue'])
+
+                qty_raw = r.get('Qty.', '')
+                try:
+                    qty = float(str(qty_raw).replace(',', '')) if str(qty_raw).strip() not in ('', 'nan') else ''
+                except (ValueError, TypeError):
+                    qty = ''
+
+                ltp_raw = r.get('LTP', '')
+                try:
+                    ltp = float(str(ltp_raw).replace(',', '')) if str(ltp_raw).strip() not in ('', 'nan', '0') else ''
+                except (ValueError, TypeError):
+                    ltp = ''
+
+                for col, val, fmt, aln, bold in [
+                    (1, overall_rank,           '0',      'center', False),
+                    (2, r.get('AssetName', r.get('Asset', '')), None, 'left', True),
+                    (3, r.get('Type', ''),      None,     'left',   False),
+                    (4, qty,                    '#,##0.##', 'right', False),
+                    (5, ltp,                    '₹#,##0.##', 'right', False),
+                    (6, pv,                     '₹#,##0',  'right',  True),
+                    (7, pv / self.total,        '0.00%',   'right',  False),
+                ]:
+                    _data_cell(ws, row, col, val, fmt, aln, bg, bold)
+                ws.row_dimensions[row].height = 15
+                row += 1
+
+            # Category subtotal
+            for col in range(1, 8):
+                ws.cell(row, col).fill = _fl(clrs['header'])
+                ws.cell(row, col).border = _bd()
+            for col, val, fmt, aln in [
+                (2, f'  ↳ {len(cat_df)} instruments', None, 'left'),
+                (6, cat_total, '₹#,##0', 'right'),
+                (7, cat_total / self.total, '0.00%', 'right'),
+            ]:
+                c = ws.cell(row, col, val)
+                c.fill = _fl(clrs['header'])
+                c.border = _bd()
+                c.font = _font(9, True, C['white'])
+                if fmt:
+                    c.number_format = fmt
+                c.alignment = _al(aln)
+            ws.row_dimensions[row].height = 16
+            row += 2
+
+        # Grand total footer
+        ws.merge_cells(f'A{row}:E{row}')
+        c = ws.cell(row, 1, f'  PORTFOLIO TOTAL   —   {len(portfolio_df)} instruments')
+        c.font = _font(10, True, C['white'])
+        c.fill = _fl(C['nav'])
+        c.alignment = _al('left')
+        for col in range(1, 8):
+            ws.cell(row, col).fill = _fl(C['nav'])
+            ws.cell(row, col).border = _bd()
+        for col, val, fmt in [
+            (6, self.total, '₹#,##0'),
+            (7, 1.0,        '0.00%'),
+        ]:
+            c = ws.cell(row, col, val)
+            c.fill = _fl(C['nav'])
+            c.border = _bd()
+            c.font = _font(10, True, C['white'])
+            c.number_format = fmt
+            c.alignment = _al('right')
+        ws.row_dimensions[row].height = 22
+
+    def add_instrument_to_stock(self, all_holdings: pd.DataFrame):
+        """Add 📂 Instrument → Stock sheet: per-fund breakdown of constituent stocks."""
+        ws = self.wb.create_sheet('📂 Instrument → Stock')
+        ws.sheet_view.showGridLines = False
+        ws.freeze_panes = 'A3'
+
+        _title_bar(ws,
+                   'INSTRUMENT → STOCK BREAKDOWN  |  Holdings of each fund / instrument',
+                   7, height=28, sz=11)
+
+        ws.merge_cells('A2:G2')
+        c = ws['A2']
+        c.value = 'Each section = one instrument. Stocks ranked by ₹ exposure within the fund.'
+        c.font = _font(8, False, 'FF444444')
+        c.fill = _fl('FFEEF4FB')
+        c.alignment = _al('left')
+        ws.row_dimensions[2].height = 14
+
+        for i, w in enumerate([4, 46, 30, 12, 18, 16, 28], 1):
+            ws.column_dimensions[get_column_letter(i)].width = w
+
+        _hdr_row(ws, 3,
+                 ['#', 'Stock / Asset', 'Sector / Industry', '% to NAV', '₹ Exposure', '% of Fund', 'Data Source'],
+                 bg=C['nav'], height=26)
+
+        if all_holdings.empty:
+            return
+
+        # Sort funds by their total value descending
+        fund_totals = (
+            all_holdings.groupby('Fund')['Weighted ₹ Exposure']
+            .sum()
+            .sort_values(ascending=False)
+        )
+
+        row = 4
+        for fund_name, fund_total in fund_totals.items():
+            fund_df = (
+                all_holdings[all_holdings['Fund'] == fund_name]
+                .sort_values('Weighted ₹ Exposure', ascending=False)
+                .reset_index(drop=True)
+            )
+
+            fund_value = fund_df['Fund Value (₹)'].iloc[0] if 'Fund Value (₹)' in fund_df.columns else fund_total
+            data_as_of = fund_df['Data Source'].iloc[0] if 'Data Source' in fund_df.columns else ''
+
+            # Fund header row
+            ws.merge_cells(f'A{row}:G{row}')
+            c = ws.cell(row, 1,
+                        f'  {fund_name}   —   {fmt_lakhs(fund_value)}')
+            c.font = _font(10, True, C['white'])
+            c.fill = _fl(C['nav'])
+            c.alignment = _al('left')
+            for col in range(1, 8):
+                ws.cell(row, col).fill = _fl(C['nav'])
+                ws.cell(row, col).border = _bd()
+            ws.row_dimensions[row].height = 22
+            row += 1
+
+            # Stock rows
+            for rank, (_, h) in enumerate(fund_df.iterrows(), 1):
+                rs  = float(h.get('Weighted ₹ Exposure', 0))
+                pct = float(h.get('% to NAV', 0))
+                pct_of_fund = rs / fund_value * 100 if fund_value > 0 else 0
+                bg = C['alt'] if rank % 2 == 0 else C['white']
+
+                for col, val, fmt, aln, bold in [
+                    (1, rank,                              '0',      'center', False),
+                    (2, h.get('Stock Name', ''),           None,     'left',   rank <= 3),
+                    (3, h.get('Industry', ''),             None,     'left',   False),
+                    (4, pct / 100,                         '0.00%',  'right',  False),
+                    (5, rs,                                '₹#,##0', 'right',  False),
+                    (6, pct_of_fund / 100,                 '0.00%',  'right',  False),
+                    (7, h.get('Data Source', ''),          None,     'left',   False),
+                ]:
+                    _data_cell(ws, row, col, val, fmt, aln, bg, bold)
+                ws.row_dimensions[row].height = 14
+                row += 1
+
+            # Subtotal row
+            for col in range(1, 8):
+                ws.cell(row, col).fill = _fl(C['title'])
+                ws.cell(row, col).border = _bd()
+            for col, val, fmt, aln in [
+                (2, f'  ↳ {len(fund_df)} stocks   |   {data_as_of}', None,     'left'),
+                (5, fund_total,                                        '₹#,##0', 'right'),
+                (6, 1.0,                                               '0.00%',  'right'),
+            ]:
+                c = ws.cell(row, col, val)
+                c.fill = _fl(C['title'])
+                c.border = _bd()
+                c.font = _font(9, True, C['white'])
+                if fmt and val not in ('', None):
+                    c.number_format = fmt
+                c.alignment = _al(aln)
+            ws.row_dimensions[row].height = 16
+            row += 2  # blank gap between funds
+
     def save(self, output_path: str):
         self.wb.save(output_path)

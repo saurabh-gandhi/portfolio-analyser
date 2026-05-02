@@ -1,0 +1,452 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Analytics | COMBINED_FAMILY_PORTFOLIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-elevated: #334155;
+            --primary: #38bdf8;
+            --secondary: #fbbf24;
+            --success: #4ade80;
+            --danger: #f87171;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --font: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            margin: 0;
+            padding: 2.5rem;
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .brand h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.04em;
+            background: linear-gradient(to right, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin: 0.5rem 0 0;
+            font-weight: 500;
+        }
+
+        .account-badge {
+            background: var(--surface);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            border: 1px solid var(--border);
+            letter-spacing: 0.05em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.75rem;
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+            opacity: 0.3;
+        }
+
+        .stat-card.xirr::before { background: var(--secondary); opacity: 1; }
+        .stat-card.gain::before { background: var(--success); opacity: 1; }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-card .sub-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        .chart-container {
+            background: var(--surface);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .legend-marker {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        /* D3 Elements */
+        .bar-buy { fill: var(--primary); opacity: 0.7; }
+        .bar-sell { fill: var(--danger); opacity: 0.7; }
+        .line-cum { 
+            fill: none; 
+            stroke: var(--secondary); 
+            stroke-width: 4; 
+            stroke-linecap: round;
+            filter: drop-shadow(0 4px 6px rgba(251, 191, 36, 0.2));
+        }
+        .dot-cum {
+            fill: var(--bg);
+            stroke: var(--secondary);
+            stroke-width: 3;
+        }
+
+        .axis-label {
+            font-size: 11px;
+            fill: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .grid line {
+            stroke: rgba(255, 255, 255, 0.05);
+            shape-rendering: crispEdges;
+        }
+
+        .crosshair line {
+            stroke: var(--text-muted);
+            stroke-width: 1;
+            stroke-dasharray: 4,4;
+            opacity: 0.5;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 1rem;
+            font-size: 0.8125rem;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+            min-width: 200px;
+        }
+
+        .tooltip .date { 
+            font-weight: 800; 
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem; 
+            color: var(--text);
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .tooltip .row { display: flex; justify-content: space-between; margin-bottom: 0.375rem; }
+        .tooltip .label { color: var(--text-muted); font-weight: 500; }
+        .tooltip .val { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <div class="brand">
+                <h1>Portfolio Analytics</h1>
+                <p>As of 11 Apr 2026</p>
+            </div>
+            <div class="account-badge">ID: COMBINED_FAMILY_PORTFOLIO</div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card xirr">
+                <div class="label">XIRR (p.a.)</div>
+                <div class="value">+9.55%</div>
+                <div class="sub-value" style="color: var(--text-muted)">Annualized Return</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Total Capital</div>
+                <div class="value">₹369.34L</div>
+                <div class="sub-value" style="color: var(--text-muted)">Net Cash Inflow</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Current Value</div>
+                <div class="value">₹431.27L</div>
+                <div class="sub-value" style="color: var(--text-muted)">Market Valuation</div>
+            </div>
+            <div class="stat-card gain">
+                <div class="label">Absolute Gain</div>
+                <div class="value" style="color: var(--success)">₹61.93L</div>
+                <div class="sub-value" style="color: var(--success)">+16.8% Return</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2>Investment Timeline</h2>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-marker" style="background: var(--primary)"></div>
+                        <span>Net Monthly</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-marker" style="background: var(--secondary); border-radius: 99px; height: 3px; width: 20px;"></div>
+                        <span>Cumulative</span>
+                    </div>
+                </div>
+            </div>
+            <div id="chart"></div>
+        </div>
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        const rawData = [{"date": "2020-08-01", "net_invest": 23478.499879000003, "cum_invest": 23478.499879000003}, {"date": "2020-09-01", "net_invest": 24231.450011, "cum_invest": 47709.94989}, {"date": "2020-10-01", "net_invest": 24540.129736999996, "cum_invest": 72250.079627}, {"date": "2020-11-01", "net_invest": 55297.699816, "cum_invest": 127547.779443}, {"date": "2020-12-01", "net_invest": 203699.116798, "cum_invest": 331246.89624100004}, {"date": "2021-01-01", "net_invest": 289268.71906050004, "cum_invest": 620515.6153015001}, {"date": "2021-02-01", "net_invest": 82699.303974, "cum_invest": 703214.9192755001}, {"date": "2021-03-01", "net_invest": 97527.0288838, "cum_invest": 800741.9481593001}, {"date": "2021-04-01", "net_invest": 719752.86976, "cum_invest": 1520494.8179193002}, {"date": "2021-05-01", "net_invest": 977071.3350806, "cum_invest": 2497566.1529999003}, {"date": "2021-06-01", "net_invest": 251900.8954801, "cum_invest": 2749467.0484800003}, {"date": "2021-07-01", "net_invest": 226471.53952779996, "cum_invest": 2975938.5880078003}, {"date": "2021-08-01", "net_invest": 442136.7725258, "cum_invest": 3418075.3605336}, {"date": "2021-09-01", "net_invest": 332137.77622470004, "cum_invest": 3750213.1367583005}, {"date": "2021-10-01", "net_invest": 196719.5351446, "cum_invest": 3946932.6719029006}, {"date": "2021-11-01", "net_invest": 326240.2823019, "cum_invest": 4273172.954204801}, {"date": "2021-12-01", "net_invest": 417534.3264461, "cum_invest": 4690707.280650901}, {"date": "2022-01-01", "net_invest": 945134.0191858, "cum_invest": 5635841.299836701}, {"date": "2022-02-01", "net_invest": 118483.4457551, "cum_invest": 5754324.745591801}, {"date": "2022-03-01", "net_invest": 813083.8231973001, "cum_invest": 6567408.5687891}, {"date": "2022-04-01", "net_invest": 1171987.8405366999, "cum_invest": 7739396.4093258}, {"date": "2022-05-01", "net_invest": 2177903.7829084997, "cum_invest": 9917300.1922343}, {"date": "2022-06-01", "net_invest": 140253.1316273, "cum_invest": 10057553.3238616}, {"date": "2022-07-01", "net_invest": 152677.7857568, "cum_invest": 10210231.109618401}, {"date": "2022-08-01", "net_invest": 1072217.5151181, "cum_invest": 11282448.6247365}, {"date": "2022-09-01", "net_invest": 200199.0125507, "cum_invest": 11482647.637287201}, {"date": "2022-10-01", "net_invest": 296814.0442976, "cum_invest": 11779461.681584802}, {"date": "2022-11-01", "net_invest": 2123636.8611505, "cum_invest": 13903098.542735301}, {"date": "2022-12-01", "net_invest": 987668.8058590001, "cum_invest": 14890767.3485943}, {"date": "2023-01-01", "net_invest": 131180.55207649997, "cum_invest": 15021947.9006708}, {"date": "2023-02-01", "net_invest": 341180.2770525, "cum_invest": 15363128.1777233}, {"date": "2023-03-01", "net_invest": 485457.34694029996, "cum_invest": 15848585.5246636}, {"date": "2023-04-01", "net_invest": 415679.828738, "cum_invest": 16264265.3534016}, {"date": "2023-05-01", "net_invest": 555303.9400636, "cum_invest": 16819569.2934652}, {"date": "2023-06-01", "net_invest": 996566.3453004, "cum_invest": 17816135.6387656}, {"date": "2023-07-01", "net_invest": 205785.422799, "cum_invest": 18021921.0615646}, {"date": "2023-08-01", "net_invest": 165341.45411400002, "cum_invest": 18187262.5156786}, {"date": "2023-09-01", "net_invest": -115245.0027, "cum_invest": 18072017.5129786}, {"date": "2023-10-01", "net_invest": 1146873.911547, "cum_invest": 19218891.4245256}, {"date": "2023-11-01", "net_invest": -919892.971623, "cum_invest": 18298998.4529026}, {"date": "2023-12-01", "net_invest": 1338805.121544, "cum_invest": 19637803.5744466}, {"date": "2024-01-01", "net_invest": 348768.24895, "cum_invest": 19986571.8233966}, {"date": "2024-02-01", "net_invest": 182782.30015599998, "cum_invest": 20169354.1235526}, {"date": "2024-03-01", "net_invest": 20.0018784, "cum_invest": 20169374.125431}, {"date": "2024-04-01", "net_invest": 129715.1091061001, "cum_invest": 20299089.234537102}, {"date": "2024-05-01", "net_invest": 1507074.9596611, "cum_invest": 21806164.194198202}, {"date": "2024-06-01", "net_invest": -1039270.4618439999, "cum_invest": 20766893.7323542}, {"date": "2024-07-01", "net_invest": -1538801.5392549, "cum_invest": 19228092.1930993}, {"date": "2024-08-01", "net_invest": 2389880.4952247, "cum_invest": 21617972.688324}, {"date": "2024-09-01", "net_invest": 413979.3065069, "cum_invest": 22031951.9948309}, {"date": "2024-10-01", "net_invest": 396585.410385, "cum_invest": 22428537.4052159}, {"date": "2024-11-01", "net_invest": 1201716.5060815, "cum_invest": 23630253.9112974}, {"date": "2024-12-01", "net_invest": 1019631.8914871996, "cum_invest": 24649885.8027846}, {"date": "2025-01-01", "net_invest": 598894.9282092, "cum_invest": 25248780.7309938}, {"date": "2025-02-01", "net_invest": 334982.01599600003, "cum_invest": 25583762.7469898}, {"date": "2025-03-01", "net_invest": -1756140.7823970001, "cum_invest": 23827621.9645928}, {"date": "2025-04-01", "net_invest": 4477595.6017524, "cum_invest": 28305217.5663452}, {"date": "2025-05-01", "net_invest": 1389838.7299600001, "cum_invest": 29695056.296305202}, {"date": "2025-06-01", "net_invest": 54005.78650839988, "cum_invest": 29749062.082813602}, {"date": "2025-07-01", "net_invest": 1935846.2263192, "cum_invest": 31684908.309132803}, {"date": "2025-08-01", "net_invest": -1164633.198764, "cum_invest": 30520275.110368803}, {"date": "2025-09-01", "net_invest": 2799860.003028, "cum_invest": 33320135.1133968}, {"date": "2025-10-01", "net_invest": -873735.8399349998, "cum_invest": 32446399.2734618}, {"date": "2025-11-01", "net_invest": 318671.46984379995, "cum_invest": 32765070.7433056}, {"date": "2025-12-01", "net_invest": 399958.13946930005, "cum_invest": 33165028.8827749}, {"date": "2026-01-01", "net_invest": -1998598.5468468, "cum_invest": 31166430.3359281}, {"date": "2026-02-01", "net_invest": 2299879.9474834, "cum_invest": 33466310.283411503}, {"date": "2026-03-01", "net_invest": -15.248337800006993, "cum_invest": 33466295.0350737}, {"date": "2026-04-01", "net_invest": 15.312899999997171, "cum_invest": 33466310.3479737}];
+        const data = rawData.map(d => ({
+            ...d,
+            date: new Date(d.date),
+            net_invest: +d.net_invest,
+            cum_invest: +d.cum_invest
+        }));
+
+        const margin = { top: 40, right: 80, bottom: 60, left: 80 };
+        const width = document.querySelector('.chart-container').clientWidth - margin.left - margin.right - 80;
+        const height = 480 - margin.top - margin.bottom;
+
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        // Scales
+        const x = d3.scaleTime()
+            .domain(d3.extent(data, d => d.date))
+            .range([0, width]);
+
+        const yLeft = d3.scaleLinear()
+            .domain([
+                Math.min(0, d3.min(data, d => d.net_invest)) * 1.2,
+                d3.max(data, d => d.net_invest) * 1.2
+            ])
+            .nice()
+            .range([height, 0]);
+
+        const yRight = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.cum_invest) * 1.1])
+            .nice()
+            .range([height, 0]);
+
+        // Grids
+        svg.append("g")
+            .attr("class", "grid")
+            .call(d3.axisLeft(yLeft).ticks(6).tickSize(-width).tickFormat(""));
+
+        // Axes
+        svg.append("g")
+            .attr("transform", `translate(0, ${height})`)
+            .call(d3.axisBottom(x).ticks(width > 600 ? 10 : 5).tickFormat(d3.timeFormat("%b '%y")))
+            .attr("class", "axis-label")
+            .call(g => g.select(".domain").remove())
+            .call(g => g.selectAll(".tick line").remove());
+
+        const fmtL = d => `₹${(d/1e5).toFixed(1)}L`;
+
+        svg.append("g")
+            .call(d3.axisLeft(yLeft).ticks(6).tickFormat(fmtL))
+            .attr("class", "axis-label")
+            .call(g => g.select(".domain").remove());
+
+        svg.append("g")
+            .attr("transform", `translate(${width}, 0)`)
+            .call(d3.axisRight(yRight).ticks(6).tickFormat(fmtL))
+            .attr("class", "axis-label")
+            .call(g => g.select(".domain").remove());
+
+        // Crosshair
+        const crosshair = svg.append("g").attr("class", "crosshair").style("display", "none");
+        crosshair.append("line").attr("class", "x-line").attr("y1", 0).attr("y2", height);
+        
+        // Bars
+        const barWidth = Math.max(2, (width / data.length) * 0.7);
+        svg.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", d => d.net_invest >= 0 ? "bar-buy" : "bar-sell")
+            .attr("x", d => x(d.date) - barWidth/2)
+            .attr("y", d => d.net_invest >= 0 ? yLeft(d.net_invest) : yLeft(0))
+            .attr("width", barWidth)
+            .attr("height", d => Math.abs(yLeft(d.net_invest) - yLeft(0)))
+            .attr("rx", 2);
+
+        // Line
+        const line = d3.line()
+            .x(d => x(d.date))
+            .y(d => yRight(d.cum_invest))
+            .curve(d3.curveMonotoneX);
+
+        const path = svg.append("path")
+            .datum(data)
+            .attr("class", "line-cum")
+            .attr("d", line);
+
+        // Animation
+        const length = path.node().getTotalLength();
+        path.attr("stroke-dasharray", length + " " + length)
+            .attr("stroke-dashoffset", length)
+            .transition()
+            .duration(2000)
+            .ease(d3.easeCubicOut)
+            .attr("stroke-dashoffset", 0);
+
+        // Dots
+        svg.selectAll(".dot-cum")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", "dot-cum")
+            .attr("cx", d => x(d.date))
+            .attr("cy", d => yRight(d.cum_invest))
+            .attr("r", 4);
+
+        // Overlay for interaction
+        const tooltip = d3.select("#tooltip");
+        const bisect = d3.bisector(d => d.date).left;
+
+        svg.append("rect")
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "none")
+            .style("pointer-events", "all")
+            .on("mousemove", (event) => {
+                const x0 = x.invert(d3.pointer(event)[0]);
+                const i = bisect(data, x0, 1);
+                const d0 = data[i - 1];
+                const d1 = data[i];
+                const d = x0 - d0.date > d1?.date - x0 ? d1 : d0;
+
+                crosshair.style("display", null)
+                    .attr("transform", `translate(${x(d.date)}, 0)`);
+
+                const fmt = d3.format(",.0f");
+                const monthFmt = d3.timeFormat("%B %Y");
+
+                tooltip.style("opacity", 1)
+                    .html(`
+                        <div class="date">${monthFmt(d.date)}</div>
+                        <div class="row">
+                            <span class="label">Monthly Net</span>
+                            <span class="val" style="color:${d.net_invest >= 0 ? 'var(--primary)' : 'var(--danger)'}">
+                                ${d.net_invest >= 0 ? '+' : ''}₹${fmt(d.net_invest)}
+                            </span>
+                        </div>
+                        <div class="row">
+                            <span class="label">Cumulative Capital</span>
+                            <span class="val" style="color:var(--secondary)">₹${fmt(d.cum_invest)}</span>
+                        </div>
+                    `)
+                    .style("left", (event.pageX + 20) + "px")
+                    .style("top", (event.pageY - 20) + "px");
+            })
+            .on("mouseout", () => {
+                tooltip.style("opacity", 0);
+                crosshair.style("display", "none");
+            });
+
+    </script>
+</body>
+</html>

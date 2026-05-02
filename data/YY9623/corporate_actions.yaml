@@ -1,0 +1,133 @@
+# corporate_actions.yaml — account YY9623
+#
+# Supported sections:
+#   mergers          — share-swap (cost basis carries forward)
+#   splits           — qty multiplier, avg cost adjusted
+#   demergers        — non-cash child unit credit
+#   sell_adjustments — off-tradebook exits injected into XIRR cash flows
+#   manual_positions — equity holdings not in any tradebook file
+#   manual_mf_positions — MF holdings not in any tradebook file
+
+mergers:
+  - date: "2021-06-18"
+    from_isin: "INF247L01031"
+    from_symbol: "N100"
+    to_isin: "INF247L01AP3"
+    to_symbol: "MON100"
+    ratio: 10.0
+    notes: "N100 split to MON100 in a ratio of 1:10 on 18 June 2021"
+
+demergers: []
+buybacks: []
+
+# ─── Equity splits ────────────────────────────────────────────────────────────
+splits:
+  - date: "2021-10-21"
+    isin: "INE930H01023"
+    symbol: "KPRMILL"
+    ratio: 5.0
+    notes: >
+      KPR Mill 1:5 stock split, ex-date ~2021-10-21. Pre-split buys (8 shares)
+      → 40 post-split. Tradebook shows 50 sells so net is negative — position
+      fully exited per holdings (some pre-split buys missing from tradebook export).
+
+
+# ─── Off-tradebook exits ──────────────────────────────────────────────────────
+sell_adjustments:
+  # NIFTYBEES: tradebook net = 9,920  |  holdings = 7,690  →  gap = 2,230 units.
+  # Fill in the actual date and price when this sell / demat transfer happened.
+  - date: "YYYY-MM-DD"          # TODO: fill in actual exit date
+    isin: "INF204KB14I2"
+    symbol: "NIFTYBEES"
+    quantity: 2230
+    price: 0.00                 # TODO: fill in redemption/transfer price per unit
+    notes: "Off-tradebook NIFTYBEES exit — 2,230 units not in any EQ CSV"
+
+  # ── Mutual funds redeemed off-platform (2021-22 SIPs, absent from current holdings) ──
+  # Fill in the redemption date and exit NAV for each fund (used in XIRR calculation).
+  # Leave date as "YYYY-MM-DD" and price as 0.0 if you don't have the exact values —
+  # the positions will be zeroed out but XIRR will be understated.
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF247L01718"
+    symbol: "MOTILAL OSWAL NASDAQ 100 FUND OF FUND - DIRECT PLAN"
+    quantity: 8908.928
+    price: 0.00                 # TODO: exit NAV on redemption date
+    notes: "10 SIPs Jun-2021→Mar-2022  |  zero sells in tradebook  |  absent from holdings"
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF109K01Y80"
+    symbol: "ICICI PRUDENTIAL NIFTY NEXT 50 INDEX FUND - DIRECT PLAN"
+    quantity: 3870.700
+    price: 0.00                 # TODO: exit NAV
+    notes: "Monthly SIPs Jun-2021→Mar-2022  |  redeemed off-platform"
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF109K012M7"
+    symbol: "ICICI PRUDENTIAL NIFTY INDEX FUND - DIRECT PLAN"
+    quantity: 818.407
+    price: 0.00                 # TODO: exit NAV
+    notes: "Monthly SIPs Jun-2021→Mar-2022  |  redeemed off-platform"
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF194K015G8"
+    symbol: "IDFC BANKING & PSU DEBT FUND - DIRECT PLAN"
+    quantity: 2719.752
+    price: 0.00                 # TODO: exit NAV
+    notes: "Apr+May 2021 purchases  |  redeemed off-platform"
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF194K01Q29"
+    symbol: "IDFC G - SEC FUND - INVESTMENT PLAN - DIRECT PLAN"
+    quantity: 1828.805
+    price: 0.00                 # TODO: exit NAV
+    notes: "Apr+May 2021 purchases  |  redeemed off-platform"
+
+  - date: "YYYY-MM-DD"          # TODO: redemption date
+    isin: "INF174K01LS2"
+    symbol: "KOTAK FLEXICAP FUND - DIRECT PLAN"
+    quantity: 90.305
+    price: 0.00                 # TODO: exit NAV
+    notes: "Single purchase Mar-2022  |  redeemed off-platform"
+
+  # ── Dummy exits to zero out fully-exited positions with ISIN-change discrepancies ──
+
+  # IRCTC: 3 pre-split buys under INE335Y01012; 1 pre-split sell under same ISIN → net 2 units.
+  # Post-split sells (2021-11-11, 10 units) are under new ISIN INE335Y01020 and don't net.
+  # Dummy sell to clear the 2 pre-split units that were effectively sold at split time.
+  - date: "2021-10-29"
+    isin: "INE335Y01012"
+    symbol: "IRCTC"
+    quantity: 2
+    price: 0.00
+    notes: "Dummy exit — 2 pre-split units stranded due to ISIN change at 1:5 split (2021-10-29)"
+
+  # KPRMILL: 8 pre-split buys under INE930H01023 → 40 post-split units after 5x split.
+  # All post-split sells (trade_ids 50021372, 1710300) use new ISIN INE930H01031 and don't net.
+  # Dummy sell to clear the 40 post-split units that were fully exited.
+  - date: "2022-02-25"
+    isin: "INE930H01023"
+    symbol: "KPRMILL"
+    quantity: 40
+    price: 0.00
+    notes: "Dummy exit — 40 post-split units stranded because sells used new ISIN INE930H01031"
+
+  # MON100: N100 merger credits 41×10=410 units to MON100 (INF247L01AP3).
+  # Direct MON100 buys/sells already net to −410 (fully sold, filtered out).
+  # The 410 merger units were also sold (2024-12-12 sell block) but under merged position.
+  # Dummy sell to clear the 410 merger-credited units.
+  - date: "2024-12-12"
+    isin: "INF247L01AP3"
+    symbol: "MON100"
+    quantity: 410
+    price: 0.00
+    notes: "Dummy exit — 410 units credited via N100→MON100 merger; sold 2024-12-12 with rest of position"
+
+# ─── Mirae ELSS — no correction needed ───────────────────────────────────────
+# The tradebook correctly nets to 3,332.153 = holdings:
+#   2022-09-29  BUY  2,456.653 @ ₹32.56  (tradebook-YY9623-MF copy.csv)
+#   2023-06-05  BUY  3,332.153 @ ₹36.16  (tradebook-YY9623-MF (2).csv)
+#   2025-10-27  SELL 2,456.653 @ ₹57.94  (tradebook-YY9623-MF.csv)
+#   Net = 3,332.153 ✓  (the sell correctly exited the 2022 units)
+# The 2022 buy was previously missed because the old secondary fingerprint dedup
+# was collapsing it — fixed in the _load() rewrite.

@@ -142,6 +142,7 @@ def main():
     from src.excel_writer import ExcelWriter
     writer = ExcelWriter(total_portfolio=total)
 
+    writer.add_original_holdings(portfolio_df)
     writer.add_true_allocation(rollup_df, exposure_df)
     writer.add_sub_class_breakdown(sub_rollup)
     writer.add_look_through_detail(exposure_df)
@@ -155,8 +156,25 @@ def main():
     if cash_df is not None and len(cash_df) > 0:
         writer.add_cash_holdings(cash_df, total)
 
+    if len(all_holdings) > 0:
+        writer.add_instrument_to_stock(all_holdings)
+
     writer.save(args.output)
-    console.print(f"\n[bold green]✅ Analysis complete! Output saved to: {args.output}[/bold green]")
+
+    from src.md_writer import save_markdown
+    md_path = save_markdown(
+        portfolio_df=portfolio_df,
+        rollup_df=rollup_df,
+        sub_rollup=sub_rollup,
+        stock_rollup=stock_rollup,
+        sector_rollup=sector_rollup,
+        all_holdings=all_holdings,
+        total=total,
+        output_path=args.output,
+    )
+    console.print(f"\n[bold green]✅ Analysis complete![/bold green]")
+    console.print(f"  📊 Excel:    {args.output}")
+    console.print(f"  📝 Markdown: {md_path}")
 
     # ── Summary stats ─────────────────────────────────────────────────────────
     console.print(Panel(

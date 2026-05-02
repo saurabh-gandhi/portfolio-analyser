@@ -1,0 +1,59 @@
+# corporate_actions.yaml
+# Corporate events and manual corrections for account OI6764.
+# The script reads this file and applies adjustments before computing final positions.
+#
+# Supported sections:
+#   mergers          — share-swap / amalgamation (non-cash; cost basis carries forward)
+#   sell_adjustments — off-tradebook sells (buyback tenders, demat credits sold off-platform)
+#   manual_positions — holdings not in any tradebook file (off-platform buys, IPO allotments)
+
+mergers:
+  - date: "2023-07-01"             # effective date of amalgamation
+    from_isin: "INE001A01036"      # HDFC Ltd (ceased to exist)
+    from_symbol: "HDFC"
+    to_isin:   "INE040A01034"      # HDFC Bank Ltd
+    to_symbol: "HDFCBANK"
+    ratio: 1.68                    # 42 HDFCBANK shares per 25 HDFC shares = 1.68x
+    notes: >
+      HDFC Ltd merged into HDFC Bank effective 2023-07-01.
+      Swap ratio: 42 HDFCBANK per 25 HDFC (1.68x).
+      Fractional shares paid as cash at market price.
+
+splits:
+  - date: "2024-07-01"
+    isin: "INE040A01034"
+    symbol: "HDFCBANK"
+    ratio: 2.0
+    notes: "Post-merger split applied on HDFCBANK position."
+
+demergers:
+  - date: "2024-12-01"
+    from_isin: "INE030A01027"
+    from_symbol: "HINDUNILVR"
+    to_isin: "INE2KCE01013"
+    to_symbol: "KWIL"
+    ratio: 1.0
+    child_avg_cost: 45.4598
+    notes: "KWIL demerged from HINDUNILVR; 1:1 unit credit."
+
+# Off-tradebook sells: each entry injects a synthetic sell into the cash-flow stream.
+# Use this for buyback tenders or any other sell not captured in Zerodha tradebook CSVs.
+sell_adjustments:
+  - date: "2022-12-23"            # TCS buyback acceptance date (Dec 2022 tranche)
+    isin:   "INE467B01029"
+    symbol: "TCS"
+    quantity: 5
+    price: 4150.00                # TCS buyback offer price (Dec 2022)
+    notes: >
+      5 remaining TCS units tendered in buyback at ₹4,150 offer price.
+      Tradebook only captured 20 of the 25 units tendered.
+
+# Positions held in demat but not in any tradebook file.
+# Fill in quantity, avg_cost, and buy_date for each missing holding.
+manual_positions:
+  - symbol: "KWIL"
+    isin:   ""                    # fill in ISIN
+    quantity: 0                   # fill in units held
+    avg_cost: 0.0                 # fill in avg buy price (₹)
+    buy_date: ""                  # approximate buy date YYYY-MM-DD (for XIRR)
+    notes: "TODO — provide quantity, avg_cost, buy_date, and ISIN"

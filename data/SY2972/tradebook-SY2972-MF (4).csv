@@ -1,0 +1,3 @@
+symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time
+SBI GOLD FUND - DIRECT PLAN,INF200K01RP8,2023-04-05,BSE,MF,,sell,false,13863.735000,19.156100,672923360,672923360,2023-04-05T00:00:00
+HDFC TOP 100 FUND - REGULAR PLAN,INF179K01BE2,2023-11-24,BSE,MF,,sell,false,150.000000,886.686000,914566953,914566953,2023-11-24T00:00:00

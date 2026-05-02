@@ -6,13 +6,55 @@ instruments:
   # ── NPS ───────────────────────────────────────────────────────────────────
   # Specify your NPS scheme type: LC75, LC50, or LC25
   # Or provide custom splits (must sum to 100)
-  "Saurabh NPS":
+  # Saurabh NPS — split by scheme from CRA statement (2 May 2026, PRAN 110143589082)
+  "Saurabh NPS - Scheme E (HDFC Equity, Nifty 50)":
     type: nps
-    scheme: LC75      # Aggressive / Lifecycle 75
+    equity_pct: 100
+    govt_bond_pct: 0
+    corp_debt_pct: 0
 
-  "Divya NPS":
+  "Saurabh NPS - Scheme C (HDFC Corp Bonds)":
     type: nps
-    scheme: LC75
+    equity_pct: 0
+    govt_bond_pct: 0
+    corp_debt_pct: 100
+
+  "Saurabh NPS - Scheme G (LIC Govt Bonds)":
+    type: nps
+    equity_pct: 0
+    govt_bond_pct: 100
+    corp_debt_pct: 0
+
+  "Saurabh NPS - MSF Equity (HDFC + UTI)":
+    type: nps
+    equity_pct: 100
+    govt_bond_pct: 0
+    corp_debt_pct: 0
+
+  # Divya NPS — split by scheme from CRA statement (2 May 2026, PRAN 110107303033)
+  "Divya NPS - Scheme E (HDFC Equity, Nifty 50)":
+    type: nps
+    equity_pct: 100
+    govt_bond_pct: 0
+    corp_debt_pct: 0
+
+  "Divya NPS - Scheme C (HDFC Corp Bonds)":
+    type: nps
+    equity_pct: 0
+    govt_bond_pct: 0
+    corp_debt_pct: 100
+
+  "Divya NPS - Scheme G (LIC Govt Bonds)":
+    type: nps
+    equity_pct: 0
+    govt_bond_pct: 100
+    corp_debt_pct: 0
+
+  "Divya NPS - MSF Equity (HDFC + UTI)":
+    type: nps
+    equity_pct: 100
+    govt_bond_pct: 0
+    corp_debt_pct: 0
 
   # ── EPF ───────────────────────────────────────────────────────────────────
   # Auto-detected from Type=Providend fund. Can override splits here.

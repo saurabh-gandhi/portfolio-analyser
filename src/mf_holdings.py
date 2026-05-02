@@ -176,6 +176,8 @@ def fetch_all_mf_etf_holdings(
         'parag parikh large cap': 'PPLCF',
     }
 
+    from .instrument_registry import KNOWN_INDIAN_ETFS, KNOWN_US_ETFS, KNOWN_US_STOCKS
+
     mf_etf_rows = portfolio_df[portfolio_df['InstrumentClass'].isin(['mf', 'etf'])].copy()
 
     for _, row in track(mf_etf_rows.iterrows(), description="Fetching fund holdings...",
@@ -183,11 +185,18 @@ def fetch_all_mf_etf_holdings(
         fund_name = row['AssetName']
         fund_value = row['PresentValue']
         name_lower = fund_name.lower()
+        name_upper = fund_name.upper().strip()
 
         # Skip arbitrage funds — they are cash equivalents
         if any(arb in name_lower for arb in arb_funds):
             if verbose:
                 console.print(f"  [yellow]↷ Skipping arbitrage fund (cash equivalent): {fund_name}[/yellow]")
+            continue
+
+        # Skip US ETFs and stocks — classified directly in true_exposure, no Indian holdings to fetch
+        if name_upper in KNOWN_US_ETFS or name_upper in KNOWN_US_STOCKS:
+            if verbose:
+                console.print(f"  [blue]→ Skipping US instrument (no constituent fetch): {fund_name}[/blue]")
             continue
 
         # Try PPFAS XLS first
@@ -214,9 +223,21 @@ def fetch_all_mf_etf_holdings(
                 console.print(f"  [green]✓ {fund_name}: {len(holdings)} holdings (PPFAS XLS)[/green]")
             continue
 
+        # For known Indian ETF tickers use the hardcoded family_id — mfdata.in search
+        # does not recognise exchange tickers (NIFTYBEES, JUNIORBEES, etc.)
+        family_id = None
+        if name_upper in KNOWN_INDIAN_ETFS:
+            family_id = KNOWN_INDIAN_ETFS[name_upper].get('family_id')
+            if family_id is None:
+                # ETF has no constituent data (e.g. GOLDBEES, LIQUIDBEES already handled)
+                if verbose:
+                    console.print(f"  [blue]→ Skipping {fund_name} (no mfdata family_id)[/blue]")
+                continue
+
         # Try mfdata.in API
         try:
-            family_id = get_family_id(fund_name)
+            if family_id is None:
+                family_id = get_family_id(fund_name)
             if family_id is None:
                 console.print(f"  [yellow]⚠ Could not find family_id for: {fund_name}[/yellow]")
                 continue

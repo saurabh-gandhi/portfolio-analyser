@@ -1,0 +1,2 @@
+symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time
+NIFTYBEES,INF204KB14I2,2024-05-08,BSE,EQ,B,buy,false,2026.000000,246.360001,1798000,1715139900026808386,2024-05-08T10:23:17
