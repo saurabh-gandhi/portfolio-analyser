@@ -1,2 +1,0 @@
-symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time
-ZERODHA NIFTY LARGEMIDCAP 250 INDEX FUND - DIRECT PLAN,INF0R8F01018,2024-07-03,BSE,MF,,buy,false,30400.829000,13.485800,1239313482,1239313482,2024-07-03T00:00:00

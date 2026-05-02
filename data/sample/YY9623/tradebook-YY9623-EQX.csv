@@ -1,2 +1,0 @@
-symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time,expiry_date
-SGBNOV28,,2021-01-07,UNKNOWN,EQ,EQ,buy,false,2.000000,5127.000000,RIGHTSISSUE,RIGHTSISSUE,2021-01-07T08:44:00

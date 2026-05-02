@@ -1,3 +1,0 @@
-symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time,expiry_date
-IRFC,,2021-01-28,UNKNOWN,EQ,EQ,buy,false,575.000000,26.000000,IPO,IPO,2021-01-28T08:44:00
-LXCHEM,,2021-03-24,UNKNOWN,EQ,EQ,buy,false,115.000000,130.000000,IPO,IPO,2021-03-24T08:44:00

@@ -1,2 +1,0 @@
-symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time,expiry_date
-SGBSEP31,,2023-10-11,UNKNOWN,EQ,EQ,buy,false,21.000000,5873.000000,IPO,IPO,2023-10-11T08:44:00
